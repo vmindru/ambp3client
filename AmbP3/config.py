@@ -4,11 +4,11 @@ DefaultConfig = {"ip": "127.0.0.1", "port": 5403, "file": False}
 DEFAULT_CONFIG_FILE = 'conf.yaml'
 
 
-class Config():
+class Config:
     def __init__(self, config_file=DEFAULT_CONFIG_FILE):
         self.conf = DefaultConfig
         try:
-            with open(config_file, 'r') as config_file_handler:
+            with open(config_file, 'rb') as config_file_handler:
                 config_from_file = yaml.load(config_file_handler)
         except IOError:
             print("default config")

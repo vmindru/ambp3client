@@ -1,4 +1,4 @@
-class Write():
+class Write:
     def to_file(data, file_handler):
         if not file_handler.closed:
             try:

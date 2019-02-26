@@ -1,11 +1,12 @@
 import socket
 import codecs
+
 from sys import exit
 
 
-class connection():
+class Connection:
     def __init__(self, ip, port):
-        self.connection = socket.socket()
+        self.connection = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         try:
             self.connection.connect((ip, port))
         except ConnectionRefusedError as error:
