@@ -16,7 +16,7 @@ def main():
         exit(1)
 
     try:
-        with open(config.file, "wb") as file_handler:
+        with open(config.file, "a") as file_handler:
             while True:
                 data = connection.read()
                 print(data)
