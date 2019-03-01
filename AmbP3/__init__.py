@@ -1,2 +1,2 @@
-from .Config import Config
-from .Write import Write
+from .config import Config
+from .write import Write
