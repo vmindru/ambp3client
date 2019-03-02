@@ -10,7 +10,8 @@ from AmbP3.write import Write
 def main():
     config = Config()
     print(vars(config))
-    connection = Connection.read(config.ip, config.port)
+    connection = Connection(config.ip, config.port)
+    connection.connect()
     if not config.file:
         print("file not defined in config")
         exit(1)
