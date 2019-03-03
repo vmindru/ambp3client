@@ -1,0 +1,12 @@
+start a demo DECODER server
+
+
+```
+./test_server.py
+```
+
+stasrt a client reading from SERVER
+
+```
+../amb_client.py
+```
