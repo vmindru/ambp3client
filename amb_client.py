@@ -23,7 +23,12 @@ def main():
         with open(config.file, "a") as file_handler:
             while True:
                 data = connection.read()
-                print("Input Data: {}\nDecoded data: {}\n".format(data_to_ascii(data), dict_to_ascii(decode(data))))
+                decoded_data = data_to_ascii(data)
+                decoded_header, decoded_body = decode(data)
+                input_msg = ("Input Data: {}\n".format(decoded_data))
+                header_msg = ("Decoded Header: {}\n".format(dict_to_ascii(decoded_header)))
+                body_msg = ("Decoded TOR Body: {}\n".format(dict_to_ascii(decoded_body)))
+                print("{}{}{}".format(input_msg, header_msg, body_msg))
                 Write.to_file(data_to_ascii(data), file_handler)
                 sleep(0.5)
     except KeyboardInterrupt:

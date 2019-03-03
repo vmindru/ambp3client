@@ -65,4 +65,10 @@ def split(data):
                   "TOR": str_header[8:10][::-1]
                   }
         return header
-    return _get_header(data)
+
+    def _get_tor_body(data):
+        tor_body = data[10:]
+        body = {"DATA": tor_body}
+        return body
+
+    return _get_header(data), _get_tor_body(data)
