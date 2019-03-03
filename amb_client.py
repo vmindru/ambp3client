@@ -4,6 +4,7 @@ from sys import exit
 
 from AmbP3.config import Config
 from AmbP3.decoder import Connection
+from AmbP3.decoder import split as decode
 from AmbP3.write import Write
 
 
@@ -20,7 +21,7 @@ def main():
         with open(config.file, "a") as file_handler:
             while True:
                 data = connection.read()
-                print(data)
+                print("Input Data: {}\nDecoded data: {}".format(data, decode(data)))
                 Write.to_file(data, file_handler)
                 sleep(0.5)
     except KeyboardInterrupt:
