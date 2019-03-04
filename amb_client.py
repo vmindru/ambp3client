@@ -4,6 +4,9 @@ from sys import exit
 
 from AmbP3.config import Config
 from AmbP3.decoder import Connection
+from AmbP3.decoder import split as decode
+from AmbP3.decoder import bin_data_to_ascii as data_to_ascii
+from AmbP3.decoder import bin_dict_to_ascii as dict_to_ascii
 from AmbP3.write import Write
 
 
@@ -20,8 +23,13 @@ def main():
         with open(config.file, "a") as file_handler:
             while True:
                 data = connection.read()
-                print(data)
-                Write.to_file(data, file_handler)
+                decoded_data = data_to_ascii(data)
+                decoded_header, decoded_body = decode(data)
+                input_msg = ("Input Data: {}\n".format(decoded_data))
+                header_msg = ("Decoded Header: {}\n".format(dict_to_ascii(decoded_header)))
+                body_msg = ("Decoded TOR Body: {}\n".format(dict_to_ascii(decoded_body)))
+                print("{}{}{}".format(input_msg, header_msg, body_msg))
+                Write.to_file(data_to_ascii(data), file_handler)
                 sleep(0.5)
     except KeyboardInterrupt:
         print("Closing")

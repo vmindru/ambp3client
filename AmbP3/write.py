@@ -2,7 +2,7 @@ class Write:
     def to_file(data, file_handler):
         if not file_handler.closed:
             try:
-                file_handler.write(data)
+                file_handler.write(f'\n{data}')
                 file_handler.flush()
             except IOError:
                 print("Can not write to {}".format(file_handler.name))
