@@ -50,6 +50,6 @@ def send_net():
 
 
 while True:
-    print("opening Socket")
+    print("Starting server")
     send_net()
-    sleep(1)
+    sleep(0.5)
