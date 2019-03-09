@@ -2,10 +2,20 @@
 
 import socket
 from time import sleep
+from argparse import ArgumentParser
 
 INPUT_FILE = "amb.out"
 ADDR = '127.0.0.1'
 PORT = 12000
+
+
+def get_args():
+    parser = ArgumentParser()
+    parser.add_argument("file", help="amb.out HEX file location", default=INPUT_FILE, nargs='?')
+    parser.add_argument("-l", "--listen-address", help="IP address to bind on",  default=ADDR)
+    parser.add_argument("-p", "--listen-port", help="PORT to bind on",  default=PORT)
+    args = parser.parse_args()
+    return args
 
 
 def create_sock(ADDR, PORT):
@@ -50,6 +60,7 @@ def send_net():
 
 
 while True:
+    arts = get_args()
     print("Starting server")
     send_net()
     sleep(0.5)
