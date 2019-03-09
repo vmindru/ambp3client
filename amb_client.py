@@ -4,7 +4,7 @@ from sys import exit
 
 from AmbP3.config import Config
 from AmbP3.decoder import Connection
-from AmbP3.decoder import split as decode
+from AmbP3.decoder import p3decode as decode
 from AmbP3.decoder import bin_data_to_ascii as data_to_ascii
 from AmbP3.decoder import bin_dict_to_ascii as dict_to_ascii
 from AmbP3.write import Write

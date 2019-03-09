@@ -10,6 +10,12 @@ class Connection:
         self.port = port
         self.socket = socket.socket()
 
+    class record(object):
+        def __init__(self, length):
+            self.lenght = length
+            self.type = None
+            self.value = None
+
     def connect(self):
         try:
             self.socket.connect((self.ip, self.port))
@@ -50,11 +56,7 @@ def bin_dict_to_ascii(dict):
     return dict
 
 
-def _byte_reorder():
-    pass
-
-
-def split(data):
+def p3decode(data):
     def _get_header(data):
         str_header = data[0:10]
         header = {"SOR": str_header[0:1],

@@ -1,0 +1,33 @@
+I came across this info in a AMBrc protocol document, it is formatted poorly because of my conversion from pdf document to text.
+
+
+Appendix B - CRC16 calculation 
+
+The following ‘C’ code is taken from the decoder source so represents exactly the way the CRC is implemented. 
+
+// initialize the CRC16 table 
+
+extern void InitCRC16( void ) { 
+inti,j; 
+WORD crc ; 
+
+for( i=0; i<256 ;i+=1){ 
+for(crc =i<<8,j=0 ;j<8 ;j+=1) 
+crc= (crc <<1) ^((crc&0x8000 )?0x1021: 0); 
+CRC16Table[i]= crc; 
+} 
+} 
+
+// calculate the CRC of a string pointed at by p 
+extern WORD CalcCRC16( char*p) { 
+WORD CRC ; 
+
+for ( CRC = 0xFFFF ; *p != 0 ; p++ ) // for all chars of a string 
+CRC=CRC16Table[ ((CRC >> 8 )&255 )]^( CRC<<8) ^*p ; 
+return CRC ; 
+} 
+
+// …assuming a preceding InitCRC16() has initialized the CRC16 table… 
+// build a full record, ‘Message’ is command without <SOR>, <CRC> and //<EOR> 
+sprintf( buf, "%c%sx%X\n", 1, Message, CalcCRC16( Message ) ) ; 
+// buf is now command with <SOR>, <CRC> and <EOR>
