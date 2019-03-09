@@ -4,17 +4,18 @@ import codecs
 from sys import exit
 
 
+class record(object):
+    def __init__(self, length):
+        self.lenght = length
+        self.type = None
+        self.value = None
+
+
 class Connection:
     def __init__(self, ip, port):
         self.ip = ip
         self.port = port
         self.socket = socket.socket()
-
-    class record(object):
-        def __init__(self, length):
-            self.lenght = length
-            self.type = None
-            self.value = None
 
     def connect(self):
         try:
@@ -67,6 +68,9 @@ def p3decode(data):
                   "TOR": str_header[8:10][::-1]
                   }
         return header
+
+    def _decode_body():
+        pass
 
     def _get_tor_body(data):
         tor_body = data[10:]
