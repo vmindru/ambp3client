@@ -38,15 +38,18 @@ def send_net():
                 print("socket connection error: {}".format(error))
                 conn.close()
                 s.close()
-                exit(1)
+                break
             except (KeyboardInterrupt, TypeError) as error:
                 print("closing socket, connection: {}".format(error))
                 conn.close()
                 s.close()
-                exit(1)
+                break
 
     conn.close()
     s.close()
 
 
-send_net()
+while True:
+    print("opening Socket")
+    send_net()
+    sleep(1)
