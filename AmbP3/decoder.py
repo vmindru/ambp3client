@@ -5,13 +5,6 @@ from sys import exit
 from . import records
 
 
-class record(object):
-    def __init__(self, length):
-        self.lenght = length
-        self.type = None
-        self.value = None
-
-
 class Connection:
     def __init__(self, ip, port):
         self.ip = ip
