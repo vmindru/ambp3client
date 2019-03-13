@@ -1,0 +1,16 @@
+Hi,
+
+I managed to verify the CRC16 procedure, ported to python, of skoky's java code.
+CRC is computed on packet including 8E and 8F bytes, with CRC bytes set to 00, as mentioned by vlad_vy.
+That works fine on wireshark collected packets from an AMB unit.
+Have seen packets of type STATUS/PASSING/GET_TIME/TIMELINE/NETWORK_SETTINGS.
+So the CRC problem seems solved.
+I only interpret STATUS and PASSING packets now. Need to code more...
+
+I also tried that using captured packets with the code connywesth's code, but I think that packet collection has some 0d/0a (CR/LF) bytes in there, in my case for PASSING packets, breaking the CRC. STATUS packets were fine though. Other packets I didn't capture.
+Example: 8e:02:3d:00:50:d3:00:00:01:00:01:04:42:6d:04:00:0d :0a:08:50:56:2d:33:38:34:36:33:04:08:80:95:f0:e8:3 a:d1:04:00:05:02:7a:00:06:02:28:00:08:02:00:00:11: 01:03:14:01:03:81:04:08:0f:02:00:8f
+^^ ^^ Maybe it's only 0d ...
+
+I'm using the python twisted framework to collect packets. Sorry, no C#
+
+

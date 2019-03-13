@@ -2,6 +2,7 @@ import socket
 import codecs
 
 from sys import exit
+from . import records
 
 
 class record(object):
@@ -69,12 +70,46 @@ def p3decode(data):
                   }
         return header
 
-    def _decode_body():
-        pass
+    def _decode_record(tor, tor_body):
+        hex_tor = codecs.encode(tor, 'hex')
+        tor_name = records.type_of_records[hex_tor]['tor_name']
+        tor_fields = records.type_of_records[hex_tor]['tor_fields']
+        # print(codecs.encode(tor_body, 'hex'), tor_name)
+        tor_body = bytearray(tor_body)
+        DECODED = {}
+        while len(tor_body) > 0:
+            one_byte = tor_body[0:1]
+            one_byte_hex = codecs.encode(one_byte, 'hex')
+            if one_byte_hex in tor_fields:
+                record_attr = tor_fields[one_byte_hex]
+            elif one_byte_hex in records.GENERAL:
+                record_attr = records.GENERAL[one_byte_hex]
+            elif one_byte_hex == b'8f':
+                tor_body = []
+                continue
+            else:
+                # print("ignoring unknown BYTE {} in {} of type {}".format(one_byte_hex, tor_body, record_type))
+                del tor_body[:2]
+                continue
+
+            record_attr_length = int(codecs.encode(tor_body[1:2], 'hex'))
+            record_attr_value = codecs.encode(tor_body[2:2+record_attr_length], 'hex')
+            # print(record_attr, record_attr_length, record_attr_value)
+            del tor_body[:2+record_attr_length]
+            DECODED[record_attr] = record_attr_value
+        print(DECODED)
+
+    def _decode_body(tor, tor_body):
+        _decode_record(tor, tor_body)
+        result = tor
+        return {'RESULT': result}
 
     def _get_tor_body(data):
         tor_body = data[10:]
-        body = {"DATA": tor_body}
-        return body
+        return tor_body
 
-    return _get_header(data), _get_tor_body(data)
+    header = _get_header(data)
+    tor = header['TOR']
+    tor_body = _get_tor_body(data)
+    decoded_body = _decode_body(tor, tor_body)
+    return header, decoded_body
