@@ -80,7 +80,10 @@ def p3decode(data):
                 tor_body = []
                 continue
             else:
-                # print("ignoring unknown BYTE {} in {} of type {}".format(one_byte_hex, tor_body, record_type))
+                if 'UNDECODED' in DECODED:
+                    DECODED['UNDECODED'].append(one_byte_hex)
+                else:
+                    DECODED['UNDECODED'] = [one_byte_hex]
                 del tor_body[:2]
                 continue
 
