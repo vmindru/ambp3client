@@ -15,6 +15,12 @@ ERROR_CODES = {
    b'0006': 'Length of record to long',
    }
 
+GENERAL = {
+    b'81': 'DECODER_ID',
+    b'83': 'CONTROLLER_ID',
+    b'85': 'REQUEST_ID'
+    }
+
 VERSION = {
     b'01': 'DECODER_TYPE',
     b'02': 'DESCRIPTION',
@@ -32,15 +38,16 @@ PASSING = {
    b'04': 'RTC_TIME',
    b'05': 'STRENGTH',
    b'06': 'HITS',
-   b'08': 'FLAGS'
+   b'08': 'FLAGS',
+   b'10': 'UTC_TIME',
+   b'13': 'RTC_ID',
+   b'14': 'SPORT',
+   b'30': 'VOLTAGE',
+   b'31': 'TEMPERATURE',
+   b'0a': 'TRAN_CODE',
+   b'0e': 'USER_FLAG',
+   b'0f': 'DRIVER_ID',
    }
-
-GENERAL = {
-    b'81': 'DECODER_ID',
-    b'83': 'CONTROLLER_ID',
-    b'85': 'REQUEST_ID'
-    }
-
 
 STATUS = {
     b'01': 'NOISE',

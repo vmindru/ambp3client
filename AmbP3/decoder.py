@@ -63,7 +63,7 @@ def p3decode(data):
         str_header = data[0:10]
         header = {"SOR": str_header[0:1],
                   "Version": str_header[1:2],
-                  "Length": str_header[2:4][::-1],
+                  "Length": str_header[2:4][::-1],  # [::-1] invert the hex ...
                   "CRC": str_header[4:6][::-1],
                   "Flags": str_header[6:8][::-1],
                   "TOR": str_header[8:10][::-1]
@@ -74,17 +74,16 @@ def p3decode(data):
         hex_tor = codecs.encode(tor, 'hex')
         tor_name = records.type_of_records[hex_tor]['tor_name']
         tor_fields = records.type_of_records[hex_tor]['tor_fields']
-        # print(codecs.encode(tor_body, 'hex'), tor_name)
+        general_fields = records.GENERAL
+        tor_fields = {**general_fields, **tor_fields}
         tor_body = bytearray(tor_body)
-        DECODED = {}
+        DECODED = {'TOR': tor_name}
         while len(tor_body) > 0:
             one_byte = tor_body[0:1]
             one_byte_hex = codecs.encode(one_byte, 'hex')
             if one_byte_hex in tor_fields:
                 record_attr = tor_fields[one_byte_hex]
-            elif one_byte_hex in records.GENERAL:
-                record_attr = records.GENERAL[one_byte_hex]
-            elif one_byte_hex == b'8f':
+            elif one_byte_hex == b'8f':  # records always end in 8f
                 tor_body = []
                 continue
             else:
@@ -93,15 +92,14 @@ def p3decode(data):
                 continue
 
             record_attr_length = int(codecs.encode(tor_body[1:2], 'hex'))
-            record_attr_value = codecs.encode(tor_body[2:2+record_attr_length], 'hex')
+            record_attr_value = codecs.encode(tor_body[2:2+record_attr_length][::-1], 'hex')
             # print(record_attr, record_attr_length, record_attr_value)
             del tor_body[:2+record_attr_length]
             DECODED[record_attr] = record_attr_value
-        print(DECODED)
+        return DECODED
 
     def _decode_body(tor, tor_body):
-        _decode_record(tor, tor_body)
-        result = tor
+        result = _decode_record(tor, tor_body)
         return {'RESULT': result}
 
     def _get_tor_body(data):
