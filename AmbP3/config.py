@@ -1,6 +1,6 @@
 import yaml
 
-DefaultConfig = {"ip": "127.0.0.1", "port": 5403, "file": False}
+DefaultConfig = {"ip": "127.0.0.1", "port": 5403, "file": False, "debug_file": False}
 DEFAULT_CONFIG_FILE = 'conf.yaml'
 
 
@@ -18,3 +18,4 @@ class Config:
             self.ip = conf['ip']
             self.port = conf['port']
             self.file = conf['file']
+            self.debug_file = conf['debug_file']

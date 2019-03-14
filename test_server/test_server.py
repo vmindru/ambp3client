@@ -2,10 +2,20 @@
 
 import socket
 from time import sleep
+from argparse import ArgumentParser
 
 INPUT_FILE = "amb.out"
 ADDR = '127.0.0.1'
 PORT = 12000
+
+
+def get_args():
+    parser = ArgumentParser()
+    parser.add_argument("INPUT_FILE", help="amb.out HEX file location", default=INPUT_FILE, nargs='?')
+    parser.add_argument("-l", "--listen-address", help="IP address to bind on",  default=ADDR, dest='ADDR')
+    parser.add_argument("-p", "--listen-port", help="PORT to bind on",  default=PORT, dest='PORT')
+    args = parser.parse_args()
+    return args
 
 
 def create_sock(ADDR, PORT):
@@ -25,7 +35,7 @@ def hex_to_binary(data):
     return byte_str
 
 
-def send_net():
+def send_net(ADDR, PORT, INPUT_FILE):
     conn, s = create_sock(ADDR, PORT)
     with open(INPUT_FILE, "r") as fd:
         while True:
@@ -38,15 +48,24 @@ def send_net():
                 print("socket connection error: {}".format(error))
                 conn.close()
                 s.close()
-                exit(1)
+                break
             except (KeyboardInterrupt, TypeError) as error:
                 print("closing socket, connection: {}".format(error))
                 conn.close()
                 s.close()
-                exit(1)
+                break
 
     conn.close()
     s.close()
 
 
-send_net()
+def main():
+    args = get_args()
+    while True:
+        print("Starting server")
+        send_net(args.ADDR, args.PORT, args.INPUT_FILE)
+        sleep(0.5)
+
+
+if __name__ == "__main__":
+    main()
