@@ -52,6 +52,34 @@ def bin_dict_to_ascii(dict):
 
 
 def p3decode(data):
+    def _validate(data):
+        "perform validation checks and return ready to process data or None"
+        data = _check_crc(data) if data is not None else None
+        data = _unescape(data) if data is not None else None
+        data = _check_length(data) if data is not None else None
+        return data
+
+    def _check_crc(data):
+        "check CRC integrity"
+        return data
+
+    def _unescape(data):
+        "If the value is 0x8d, 0x8e or 0x8f and it's not the first or last byte of the message,\
+         the value is prefixed/escaped by 0x8D followed by the byte value plus 0x20."
+        data = bytearray(data)
+        for byte_number in list(range(0, len(data))):
+            byte = data[byte_number:byte_number+1]
+            if codecs.encode(byte, 'hex') == b'8d':
+                data[byte_number+1] = data[byte_number+1]-32
+        while data.find(int('8d', 16)) != -1:
+            data.remove(int('8d', 16))
+        data = bytes(data)
+        return data
+
+    def _check_length(data):
+        "check if data is of correct length"
+        return data
+
     def _get_header(data):
         str_header = data[0:10]
         header = {"SOR": str_header[0:1],
@@ -65,12 +93,17 @@ def p3decode(data):
 
     def _decode_record(tor, tor_body):
         hex_tor = codecs.encode(tor, 'hex')
-        tor_name = records.type_of_records[hex_tor]['tor_name']
-        tor_fields = records.type_of_records[hex_tor]['tor_fields']
+        if hex_tor in records.type_of_records:
+            tor_name = records.type_of_records[hex_tor]['tor_name']
+            tor_fields = records.type_of_records[hex_tor]['tor_fields']
+            DECODED = {'TOR': tor_name}
+        else:
+            print("{} record_type uknown".format(hex_tor))
+            return {'undecode_tor_body': tor_body}
+
         general_fields = records.GENERAL
         tor_fields = {**general_fields, **tor_fields}
         tor_body = bytearray(tor_body)
-        DECODED = {'TOR': tor_name}
         while len(tor_body) > 0:
             one_byte = tor_body[0:1]
             one_byte_hex = codecs.encode(one_byte, 'hex')
@@ -94,16 +127,24 @@ def p3decode(data):
             DECODED[record_attr] = record_attr_value
         return DECODED
 
-    def _decode_body(tor, tor_body):
-        result = _decode_record(tor, tor_body)
-        return {'RESULT': result}
+    def _decode_body(tor, data):
+        tor_body = _get_tor_body(data)
+        try:
+            result = _decode_record(tor, tor_body)
+            return {'RESULT': result}
+        except ValueError:
+            print("DECODE FAILED. TOR: {}, TOR_BODY: {}".format(tor, tor_body))
+            return {'RESULT': {}}
 
     def _get_tor_body(data):
         tor_body = data[10:]
         return tor_body
 
-    header = _get_header(data)
-    tor = header['TOR']
-    tor_body = _get_tor_body(data)
-    decoded_body = _decode_body(tor, tor_body)
-    return header, decoded_body
+    data = _validate(data)
+    if data is not None:
+        decoded_header = _get_header(data)
+        tor = decoded_header['TOR']
+        decoded_body = _decode_body(tor, data)
+        return decoded_header, decoded_body
+    else:
+        return data, data

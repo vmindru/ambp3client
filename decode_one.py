@@ -24,7 +24,7 @@ def main():
     data = args.data.rstrip()
     result = decode(hex_to_binary(data))
     header = dict_to_ascii(result[0])
-    body = dict_to_ascii(result[1])
+    body = result[1]
     return header, body
 
 

@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 
 INPUT_FILE = "amb.out"
 ADDR = '127.0.0.1'
-PORT = 12000
+PORT = 12001
 
 
 def get_args():
@@ -30,9 +30,12 @@ def create_sock(ADDR, PORT):
 
 
 def hex_to_binary(data):
-    bin_str = bin(int(data, 16))
-    byte_str = int(bin_str, 2).to_bytes((len(bin_str)//8), 'big')
-    return byte_str
+    try:
+        bin_str = bin(int(data, 16))
+        byte_str = int(bin_str, 2).to_bytes((len(bin_str)//8), 'big')
+        return byte_str
+    except ValueError:
+        return None
 
 
 def send_net(ADDR, PORT, INPUT_FILE):

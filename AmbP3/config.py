@@ -9,7 +9,7 @@ class Config:
         self.conf = DefaultConfig
         try:
             with open(config_file, 'rb') as config_file_handler:
-                config_from_file = yaml.load(config_file_handler)
+                config_from_file = yaml.safe_load(config_file_handler)
         except IOError:
             print("default config")
             config_from_file = {}

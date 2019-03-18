@@ -1,3 +1,6 @@
 **venv
 **__pycache__
 **.pyc
+**amb_raw.log
+**out.log
+
