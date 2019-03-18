@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS passes (
+    pass_id INT,
+    transponder_id INT,
+    rtc_time BIGINT,
+    strength SMALLINT,
+    hits SMALLINT,
+    flags SMALLINT,
+    decoder_id INT,
+    PRIMARY KEY (pass_id)
+)  ENGINE=INNODB;

@@ -37,6 +37,10 @@ class Connection:
         return data
 
 
+def bin_to_decimal(bin_data):
+    return int(bin_data.decode(), 16)
+
+
 def bin_data_to_ascii(bin_data):
     "Converts binary input HEX data into ascii"
     data = codecs.encode(bin_data, 'hex')
@@ -66,14 +70,14 @@ def p3decode(data):
     def _unescape(data):
         "If the value is 0x8d, 0x8e or 0x8f and it's not the first or last byte of the message,\
          the value is prefixed/escaped by 0x8D followed by the byte value plus 0x20."
-        data = bytearray(data)
+        new_data = bytearray(data)
         for byte_number in list(range(0, len(data))):
             byte = data[byte_number:byte_number+1]
             if codecs.encode(byte, 'hex') == b'8d':
-                data[byte_number+1] = data[byte_number+1]-32
-        while data.find(int('8d', 16)) != -1:
-            data.remove(int('8d', 16))
-        data = bytes(data)
+                print(data[byte_number+1])
+                new_data[byte_number+1] = data[byte_number+1]-int('0x20', 16)
+                del new_data[byte_number]
+        data = bytes(new_data)
         return data
 
     def _check_length(data):

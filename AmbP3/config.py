@@ -1,7 +1,9 @@
 import yaml
 
-DefaultConfig = {"ip": "127.0.0.1", "port": 5403, "file": False, "debug_file": False}
+DEFAULT_PORT = 5403
+DEFAULT_IP = '127.0.0.1'
 DEFAULT_CONFIG_FILE = 'conf.yaml'
+DefaultConfig = {"ip": DEFAULT_IP, "port": DEFAULT_PORT, "file": False, "debug_file": False, 'mysql_backend': False}
 
 
 class Config:
@@ -15,6 +17,7 @@ class Config:
             config_from_file = {}
         if isinstance(config_from_file, dict):
             conf = {**DefaultConfig,  **config_from_file}
+            self.conf = conf
             self.ip = conf['ip']
             self.port = conf['port']
             self.file = conf['file']

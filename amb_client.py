@@ -3,7 +3,12 @@ from time import sleep
 from sys import exit
 from argparse import ArgumentParser
 
+import mysql.connector as mysqlconnector
+
 from AmbP3.config import Config
+from AmbP3.config import DEFAULT_CONFIG_FILE
+from AmbP3.config import DEFAULT_PORT
+from AmbP3.config import DEFAULT_IP
 from AmbP3.decoder import Connection
 from AmbP3.decoder import p3decode as decode
 from AmbP3.decoder import bin_data_to_ascii as data_to_ascii
@@ -11,26 +16,38 @@ from AmbP3.decoder import bin_dict_to_ascii as dict_to_ascii
 from AmbP3.write import Write
 
 
-def get_args(config):
-    PORT = config.port
-    IP = config.ip
+def get_args(PORT=DEFAULT_PORT, IP=DEFAULT_IP, config_file=DEFAULT_CONFIG_FILE):
     """ args that overwrite AmbP3.config """
-    port_help_msg = "PORT for AMB decoder. Default {}".format(PORT)
-    server_help_msg = "ip address of AMB decoder. Default {}".format(IP)
     args = ArgumentParser()
-    args.add_argument("-p", "--port", default=PORT, type=int, help=port_help_msg)
-    args.add_argument("-a", "--address", dest="ip", default=IP, help=server_help_msg)
+    args.add_argument("-f", "--config", dest='config_file', default=config_file)
     cli_args = args.parse_args()
-    config.ip = cli_args.ip
-    config.port = cli_args.port
+    config = Config(cli_args.config_file)
     return config
 
 
+def open_mysql_connection(user, db, password):
+    try:
+        sql_con = mysqlconnector.connect(user=user, db=db, password=password)
+        return sql_con
+    except mysqlconnector.errors.ProgrammingError as e:
+        print("DB connection failed: {}".format(e))
+        return None
+
+
 def main():
-    config = Config()
-    config = get_args(config)
+    config = get_args()
+    conf = config.conf
+    print(conf)
+    mysql_enabled = conf['mysql_backend']
+    if mysql_enabled:
+        mysql_con = open_mysql_connection(user=conf['mysql_user'],
+                                          db=conf['mysql_db'],
+                                          password=conf['mysql_password']
+                                          )
+        my_cursor = mysql_con.cursor()
     connection = Connection(config.ip, config.port)
     connection.connect()
+
     if not config.file:
         print("file not defined in config")
         exit(1)
@@ -41,16 +58,18 @@ def main():
     try:
         with open(config.file, "a") as amb_raw, open(config.debug_file, "a") as amb_debug:
             while True:
+                raw_log_delim = "##############################################"
                 data = connection.read()
                 decoded_data = data_to_ascii(data)
+                Write.to_file(decoded_data, amb_raw)
                 decoded_header, decoded_body = decode(data)
-                input_msg = ("Input Data: {}\n".format(decoded_data))
                 header_msg = ("Decoded Header: {}\n".format(dict_to_ascii(decoded_header)))
-                print("{}{}{}".format(input_msg, header_msg, decoded_body))
-                raw_log_delim = "##############################################"
                 raw_log = "{}\n{}\n{}\n".format(raw_log_delim, header_msg, decoded_body)
-                Write.to_file(data_to_ascii(data), amb_raw)
                 Write.to_file(raw_log, amb_debug)
+                if mysql_enabled:
+                    if 'TOR' in decoded_body['RESULT'] and decoded_body['RESULT']['TOR'] == 'PASSING':
+                        Write.passing_to_mysql(my_cursor, decoded_body)
+                        mysql_con.commit()
                 sleep(0.1)
     except KeyboardInterrupt:
         print("Closing")
