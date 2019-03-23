@@ -74,7 +74,6 @@ def p3decode(data):
         for byte_number in list(range(0, len(data))):
             byte = data[byte_number:byte_number+1]
             if codecs.encode(byte, 'hex') == b'8d':
-                print(data[byte_number+1])
                 new_data[byte_number+1] = data[byte_number+1]-int('0x20', 16)
                 del new_data[byte_number]
         data = bytes(new_data)
@@ -126,7 +125,6 @@ def p3decode(data):
 
             record_attr_length = int(codecs.encode(tor_body[1:2], 'hex'))
             record_attr_value = codecs.encode(tor_body[2:2+record_attr_length][::-1], 'hex')
-            # print(record_attr, record_attr_length, record_attr_value)
             del tor_body[:2+record_attr_length]
             DECODED[record_attr] = record_attr_value
         return DECODED

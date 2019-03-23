@@ -1,0 +1,38 @@
+function amb_save_logs(){
+    echo "CLEANING LOGS"
+    AMBLOGS="$HOME/Documents/AMBLOGS"
+    SUFIX=$(date +%F-%H-%M-%S)
+    if [ ! -d $AMBLOGS ]
+    then
+        mkdir -p $AMBLOGS
+    fi
+    cp /tmp/amb_raw.log $AMBLOGS/amb_raw.log-$SUFIX
+    cp /tmp/out.log $AMBLOGS/out.log-$SUFIX
+    cp /tmp/amb_client.log $AMBLOGS/amb_client.log-$SUFIX
+    echo > /tmp/amb_raw.log
+    echo > /tmp/out.log
+    echo > /tmp/amb_client.log
+}
+
+
+function amb_start_client() {
+  AMBDIR="$HOME/proj/ambp3/"
+  pushd $AMBDIR
+  source venv/bin/activate
+  while true
+  do
+      start_counter=0
+      if [ $start_counter -le 10 ]
+      then
+        start_counter=$((var+1))
+        echo "STARTING CLIENT, SAVING LOGS TO /tmp/amb_client.log"
+        ./amb_client.py -f local_conf.yaml > /tmp/amb_client.log 2>&1
+        amb_save_logs
+        sleep 3
+      else
+        echo "EXITING TOO MANY FAILS"
+        sleep 1
+        break
+      fi
+  done
+}

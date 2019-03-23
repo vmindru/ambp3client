@@ -70,6 +70,7 @@ def main():
                     if 'TOR' in decoded_body['RESULT'] and decoded_body['RESULT']['TOR'] == 'PASSING':
                         Write.passing_to_mysql(my_cursor, decoded_body)
                         mysql_con.commit()
+                        print(decoded_body)
                 sleep(0.1)
     except KeyboardInterrupt:
         print("Closing")
