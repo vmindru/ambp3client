@@ -9,3 +9,24 @@ CREATE TABLE IF NOT EXISTS passes (
     decoder_id INT UNSIGNED NOT NULL,
     PRIMARY KEY (db_entry_id)
 )  ENGINE=INNODB;
+
+CREATE TABLE IF NOT EXISTS laps (
+    heat_id INT(8) UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+    lapp_number: INT(8) UNSIGNED NOT NULL,
+    pass_id INT UNSIGNED NOT NULL,
+    kart_number INT UNSIGNED NOT NULL,
+    rtc_time BIGINT UNSIGNED  NOT NULL,
+    lap_time SMALLINT UNSIGNED,
+    PRIMARY KEY (heat_id)
+)  ENGINE=INNODB;
+
+CREATE TABLE IF NOT EXISTS passe (
+    heat_id INT(8) UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+    heat_finished BOOL,
+    karts JSON NOT NULL,
+    nr_of_laps: INT(8) UNSIGNE,
+    pass_stop_start_id: INT USIGNED,
+    rtc_time_start BIGINT UNSIGNED  NOT NULL,
+    rtc_time_end SMALLINT UNSIGNED,
+    PRIMARY KEY (heat_id)
+)  ENGINE=INNODB;
