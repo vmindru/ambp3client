@@ -4,4 +4,4 @@
 **amb_raw.log
 **out.log
 local_conf.yaml
-
+test_server/out.log*

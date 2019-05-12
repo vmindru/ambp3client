@@ -1,6 +1,10 @@
+#!/usr/bin/bash
+
+AMBLOGS="$HOME/Documents/AMBLOGS"
+AMBDIR="$HOME/proj/ambp3/"
+
 function amb_save_logs(){
     echo "CLEANING LOGS"
-    AMBLOGS="$HOME/Documents/AMBLOGS"
     SUFIX=$(date +%F-%H-%M-%S)
     if [ ! -d $AMBLOGS ]
     then
@@ -14,9 +18,7 @@ function amb_save_logs(){
     echo > /tmp/amb_client.log
 }
 
-
 function amb_start_client() {
-  AMBDIR="$HOME/proj/ambp3/"
   pushd $AMBDIR
   source venv/bin/activate
   while true
@@ -36,3 +38,15 @@ function amb_start_client() {
       fi
   done
 }
+
+if [ $# -eq 1 ]
+then
+    case $1 in
+        start)
+            amb_start_client
+        ;;
+        *)
+            test
+        ;;
+    esac
+fi

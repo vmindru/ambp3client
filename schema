@@ -1,10 +1,40 @@
 CREATE TABLE IF NOT EXISTS passes (
-    pass_id INT,
-    transponder_id INT,
-    rtc_time BIGINT,
-    strength SMALLINT,
-    hits SMALLINT,
-    flags SMALLINT,
-    decoder_id INT,
+    db_entry_id INT(8) UNSIGNED NOT NULL AUTO_INCREMENT,
+    pass_id INT UNSIGNED NOT NULL UNIQUE,
+    transponder_id INT UNSIGNED NOT NULL,
+    rtc_time BIGINT UNSIGNED  NOT NULL,
+    strength SMALLINT UNSIGNED,
+    hits SMALLINT UNSIGNED,
+    flags SMALLINT UNSIGNED,
+    decoder_id INT UNSIGNED NOT NULL,
+    PRIMARY KEY (db_entry_id)
+)  ENGINE=INNODB;
+
+CREATE TABLE IF NOT EXISTS laps (
+    heat_id INT(8) UNSIGNED NOT NULL,
+    lap_number INT(8) UNSIGNED NOT NULL,
+    pass_id INT UNSIGNED NOT NULL,
+    kart_number INT UNSIGNED NOT NULL,
+    rtc_time BIGINT UNSIGNED  NOT NULL,
+    lap_time SMALLINT UNSIGNED,
     PRIMARY KEY (pass_id)
+)  ENGINE=INNODB;
+
+CREATE TABLE IF NOT EXISTS heats (
+    heat_id INT(8) UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+    heat_finished BOOL DEFAULT 0,
+    karts JSON NOT NULL DEFAULT '{}',
+    nr_of_laps INT(8) UNSIGNED DEFAULT 1,
+    first_pass_id INT UNSIGNED,
+    last_pass_id INT UNSIGNED,
+    rtc_time_start BIGINT UNSIGNED NOT NULL,
+    rtc_time_end BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (heat_id)
+)  ENGINE=INNODB;
+
+CREATE TABLE IF NOT EXISTS karts (
+    name CHAR(20),
+    kart_number INT(3) UNSIGNED NOT NULL UNIQUE,
+    transponder_id INT UNSIGNED NOT NULL,
+    PRIMARY KEY (kart_number)
 )  ENGINE=INNODB;
