@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS laps (
 CREATE TABLE IF NOT EXISTS heats (
     heat_id INT(8) UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
     heat_finished BOOL DEFAULT 0,
-    karts JSON NOT NULL DEFAULT '{}',
+    karts JSON NOT NULL DEFAULT '{"karts": []}',
     nr_of_laps INT(8) UNSIGNED DEFAULT 1,
     first_pass_id INT UNSIGNED,
     last_pass_id INT UNSIGNED,

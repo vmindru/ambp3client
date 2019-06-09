@@ -3,7 +3,7 @@ import logging
 
 from time import time
 from time import sleep
-
+import json
 
 from amb_client import open_mysql_connection
 from amb_client import get_args
@@ -30,7 +30,7 @@ class Heat():
         self.heat = self.get_heat()
         self.heat_id = self.heat[0]
         self.heat_finished = self.heat[1]
-        self.karts = self.heat[2]
+        self.karts = json.loads(self.heat[2])
         self.nr_of_laps = self.heat[3]
         self.first_pass_id = self.heat[4]
         self.last_pass_id = self.heat[5]
@@ -46,7 +46,6 @@ class Heat():
         return mysql_con
 
     def run_query(self, query):
-        """ if single is set to True, returns single raw """
         self.cursor.execute(query)
         results = self.cursor.fetchall()
         return results
@@ -83,7 +82,7 @@ NULL".format(first_pass_id, last_pass_id)
 
     def process_heat_passes(self):
         "process heat_passes"
-        print("Getting latest passes")
+        logging.debug("Getting latest passes")
         if bool(self.first_pass_id):
             self.first_pass_rtc = self.get_pass_rtc(self.first_pass_id)
             self.heat_rtc_finish = self.first_pass_rtc + self.heat_duration * 1000000
@@ -107,11 +106,28 @@ laps.heat_id is NULL".format(query)
     def add_pass_to_laps(self, pass_id):
         transpoder_id = self.not_processed_passes_dict[pass_id][1]
         self.get_kart_id(transpoder_id)
-#        print(self.get_kart_id(transpoder_id))
 
     def create_heat(self):
         logging.debug("creating new heat")
-        self.cursor.execute("insert into heats values ()")
+        # result = self.run_query("select * from passes order by db_entry_id desc limit 1")
+        # last_pass_id = result[0][0]
+        last_pass_id = 10052
+        logging.debug("Last entry: {}. Waiting for new one".format(last_pass_id))
+        while True:
+            query = "select * from passes where db_entry_id > {} order by db_entry_id desc limit 1".format(last_pass_id)
+            last_pass = self.run_query(query)[0]
+            pass_id = last_pass[0]
+            if pass_id > last_pass_id:
+                rtc_time_start = last_pass[3]
+                rtc_time_end = rtc_time_start + (self.heat_duration * 1000000)
+                logging.debug("last pass at {}".format(rtc_time_start))
+                columns = "rtc_time_start, rtc_time_end"
+                insert = "insert into heats ({}) values ({},{})".format(columns, rtc_time_start, rtc_time_end)
+                self.cursor.execute(insert)
+                return True
+            else:
+                logging.debug("waiting for new pass")
+                sleep(0.5)
 
     def run_heat(self):
         "run HEAT with duration"
@@ -123,8 +139,10 @@ laps.heat_id is NULL".format(query)
         """ converts transpodner name to  kart number and kart name """
         query = "select name, kart_number from karts where transponder_id = {}".format(transponder_id)
         result = self.run_query(query)
-#        return name, kart_number
-        print(result)
+        if len(result) == 1:
+            return result[0]
+        else:
+            return transponder_id
 
 
 def main():
