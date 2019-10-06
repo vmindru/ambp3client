@@ -1,8 +1,12 @@
 import socket
 import codecs
 
+
 from sys import exit
 from . import records
+from .logs import Logg
+
+logger = Logg.create_logger('decoder')
 
 
 class Connection:
@@ -15,26 +19,42 @@ class Connection:
         try:
             self.socket.connect((self.ip, self.port))
         except ConnectionRefusedError as error:
-            print("Can not connect to {}:{}. {}".format(self.ip, self.port, error))
+            logger.error("Can not connect to {}:{}. {}".format(self.ip, self.port, error))
             exit(1)
         except (socket.timeout, socket.error) as error:
-            print("Error occurred while trying to communicate with  {}:{}".format(self.ip, self.port, error))
+            logger.error("Error occurred while trying to communicate with  {}:{}".format(self.ip, self.port, error))
             exit(1)
+
+    def split_records(self, data):
+        """some times server send 2 records in one message
+           concatinated, you can find those by '8f8e' EOR and SOR next to eahc other"""
+        byte_array = bytearray(data)
+        size = len(byte_array)
+        split_data = [bytearray()]
+        for index, byte in enumerate(byte_array):
+            if index != size-1 and byte == 143 and byte_array[index+1] == 142:
+                print("found delimeter byte 143,142 b'8f8e'")
+                split_data[-1].append(byte)
+                split_data.append(bytearray())
+                print("start new record")
+            else:
+                split_data[-1].append(byte)
+        return split_data
 
     def read(self, bufsize=1024):
         try:
             data = self.socket.recv(bufsize)
         except socket.error:
-            print("Error reading from socket")
+            logger.error("Error reading from socket")
             exit(1)
         except socket.timeout:
-            print("Socket closed while reading")
+            logger.error("Socket closed while reading")
         if data == b'':
             msg = "No data received, it seems socket got closed"
-            print("{}".format(msg))
+            logger.info("{}".format(msg))
             self.socket.close()
             exit(1)
-        return data
+        return self.split_records(data)
 
 
 def bin_to_decimal(bin_data):
@@ -59,6 +79,7 @@ def p3decode(data):
     def _validate(data):
         "perform validation checks and return ready to process data or None"
         data = _check_crc(data) if data is not None else None
+        print("P3decode function decodint: {}".format(data.hex()))
         data = _unescape(data) if data is not None else None
         data = _check_length(data) if data is not None else None
         return data
@@ -70,12 +91,32 @@ def p3decode(data):
     def _unescape(data):
         "If the value is 0x8d, 0x8e or 0x8f and it's not the first or last byte of the message,\
          the value is prefixed/escaped by 0x8D followed by the byte value plus 0x20."
+        new_data = bytearray(data)[1:-1]  # first and last character should not be escaped
+        escaped_data = bytearray()
+        escape_next = False
+        for byte in new_data:
+            if escape_next:
+                escaped_data.append(byte - 20)
+                escape_next = False
+                continue
+            if byte in [141, 141, 142]:
+                escape_next = True
+            else:
+                escaped_data.append(byte)
+        escaped_data.insert(0, 142)  # INSERT THE SOR Start of Record
+        escaped_data.append(143)  # INSERT THE EOR End of Record
+        return bytes(escaped_data)
+
+    def _lunescape(data):
+        "If the value is 0x8d, 0x8e or 0x8f and it's not the first or last byte of the message,\
+         the value is prefixed/escaped by 0x8D followed by the byte value plus 0x20."
         new_data = bytearray(data)
-        for byte_number in list(range(0, len(data))):
+        for byte_number in list(range(1, len(data)-1)):
             byte = data[byte_number:byte_number+1]
-            if codecs.encode(byte, 'hex') == b'8d':
+            if codecs.encode(byte, 'hex') in [b'8d', b'8e', b'8f']:
                 new_data[byte_number+1] = data[byte_number+1]-int('0x20', 16)
                 del new_data[byte_number]
+
         data = bytes(new_data)
         return data
 
@@ -96,6 +137,7 @@ def p3decode(data):
 
     def _decode_record(tor, tor_body):
         hex_tor = codecs.encode(tor, 'hex')
+        logger.info("tor:{} converted to hex_tor: {}".format(tor, hex_tor))
         if hex_tor in records.type_of_records:
             tor_name = records.type_of_records[hex_tor]['tor_name']
             tor_fields = records.type_of_records[hex_tor]['tor_fields']

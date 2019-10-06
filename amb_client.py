@@ -4,7 +4,7 @@ from sys import exit
 
 from AmbP3.config import get_args
 from AmbP3.decoder import Connection
-from AmbP3.decoder import p3decode as decode
+from AmbP3.decoder import p3decode
 from AmbP3.decoder import bin_data_to_ascii as data_to_ascii
 from AmbP3.decoder import bin_dict_to_ascii as dict_to_ascii
 from AmbP3.write import Write
@@ -40,16 +40,18 @@ def main():
         with open(config.file, "a") as amb_raw, open(config.debug_file, "a") as amb_debug:
             while True:
                 raw_log_delim = "##############################################"
-                data = connection.read()
-                decoded_data = data_to_ascii(data)
-                Write.to_file(decoded_data, amb_raw)
-                decoded_header, decoded_body = decode(data)
-                header_msg = ("Decoded Header: {}\n".format(dict_to_ascii(decoded_header)))
-                raw_log = "{}\n{}\n{}\n".format(raw_log_delim, header_msg, decoded_body)
-                Write.to_file(raw_log, amb_debug)
-                if 'TOR' in decoded_body['RESULT'] and decoded_body['RESULT']['TOR'] == 'PASSING':
-                    Write.passing_to_mysql(my_cursor, decoded_body)
-                    print(decoded_body)
+                print(raw_log_delim)
+                for data in connection.read():
+                    decoded_data = data_to_ascii(data)
+                    Write.to_file(decoded_data, amb_raw)  # REPLACE BY LOGGING
+                    decoded_header, decoded_body = p3decode(data)  # NEED OT REPLACE WITH LOGGING
+                    header_msg = ("Decoded Header: {}\n".format(dict_to_ascii(decoded_header)))
+                    raw_log = "{}\n{}\n{}\n".format(raw_log_delim, header_msg, decoded_body)
+                    Write.to_file(raw_log, amb_debug)
+                    if 'TOR' in decoded_body['RESULT'] and decoded_body['RESULT']['TOR'] == 'PASSING':
+                        Write.passing_to_mysql(my_cursor, decoded_body)
+                        print(decoded_body)
+                    sleep(0.1)
                 sleep(0.1)
     except KeyboardInterrupt:
         print("Closing")
