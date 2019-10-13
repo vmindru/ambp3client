@@ -228,7 +228,7 @@ def main():
             heat.run_heat()
         else:
             print(heat.last_pass_id)
-        sleep(0.5)
+        sleep(1)
 
 
 if __name__ == "__main__":

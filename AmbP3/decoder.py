@@ -41,7 +41,7 @@ class Connection:
                 split_data[-1].append(byte)
         return split_data
 
-    def read(self, bufsize=1024):
+    def read(self, bufsize=10240):
         try:
             data = self.socket.recv(bufsize)
         except socket.error:
@@ -96,7 +96,7 @@ def p3decode(data):
         escape_next = False
         for byte in new_data:
             if escape_next:
-                escaped_data.append(byte - 20)
+                escaped_data.append(byte - 32)
                 escape_next = False
                 continue
             if byte in [141, 141, 142]:
