@@ -46,7 +46,7 @@ def send_net(ADDR, PORT, INPUT_FILE):
             data = hex_to_binary(data)
             try:
                 conn.send(data)
-                sleep(0.1)
+                sleep(0.5)
             except (ConnectionResetError, BrokenPipeError) as error:
                 print("socket connection error: {}".format(error))
                 conn.close()
@@ -67,7 +67,7 @@ def main():
     while True:
         print("Starting server")
         send_net(args.ADDR, args.PORT, args.INPUT_FILE)
-        sleep(0.1)
+        sleep(0.5)
 
 
 if __name__ == "__main__":
