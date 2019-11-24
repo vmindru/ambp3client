@@ -46,7 +46,7 @@ def send_net(ADDR, PORT, INPUT_FILE):
             data = hex_to_binary(data)
             try:
                 conn.send(data)
-                sleep(1)
+                sleep(0.5)
             except (ConnectionResetError, BrokenPipeError) as error:
                 print("socket connection error: {}".format(error))
                 conn.close()
