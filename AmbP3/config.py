@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 DEFAULT_PORT = 5403
 DEFAULT_IP = '127.0.0.1'
 DEFAULT_CONFIG_FILE = 'conf.yaml'
-DefaultConfig = {"ip": DEFAULT_IP, "port": DEFAULT_PORT, "file": False, "debug_file": False, 'mysql_backend': False}
+DefaultConfig = {"ip": DEFAULT_IP, "port": DEFAULT_PORT, "file": False, "debug_file": False, 'mysql_backend': False, 'mysql_host': '127.0.0.1', 'mysql_port': 3306}
 
 
 class Config:

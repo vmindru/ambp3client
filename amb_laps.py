@@ -28,7 +28,9 @@ def list_to_dict(mylist, index=0):
 def mysql_connect(conf):
     con = open_mysql_connection(user=conf['mysql_user'],
                                 db=conf['mysql_db'],
-                                password=conf['mysql_password'])
+                                password=conf['mysql_password'],
+                                host=conf['mysql_host'],
+                                port=conf['mysql_port'],)
     con.autocommit = True
     if con is None:
         print("Failed to open DB connection, exiting")

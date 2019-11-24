@@ -22,7 +22,9 @@ def main():
         exit(1)
     mysql_con = open_mysql_connection(user=conf['mysql_user'],
                                       db=conf['mysql_db'],
-                                      password=conf['mysql_password']
+                                      password=conf['mysql_password'],
+                                      host=conf['mysql_host'],
+                                      port=conf['mysql_port'],
                                       )
     cursor = mysql_con.cursor()
     my_cursor = Cursor(mysql_con, cursor)

@@ -4,9 +4,9 @@ from .decoder import bin_to_decimal
 from mysql import connector as mysqlconnector
 
 
-def open_mysql_connection(user, db, password, autocommit=True):
+def open_mysql_connection(user, db, password, autocommit=True, host='127.0.0.1', port=3306):
     try:
-        sql_con = mysqlconnector.connect(user=user, db=db, password=password)
+        sql_con = mysqlconnector.connect(user=user, db=db, password=password, host=host, port=port)
         sql_con.autocommit = True
         return sql_con
     except mysqlconnector.errors.ProgrammingError as e:
