@@ -13,7 +13,7 @@ def get_args():
     parser = ArgumentParser()
     parser.add_argument("INPUT_FILE", help="amb.out HEX file location", default=INPUT_FILE, nargs='?')
     parser.add_argument("-l", "--listen-address", help="IP address to bind on",  default=ADDR, dest='ADDR')
-    parser.add_argument("-p", "--listen-port", help="PORT to bind on",  default=PORT, dest='PORT')
+    parser.add_argument("-p", "--listen-port", help="PORT to bind on",  default=PORT, dest='PORT', type=int)
     args = parser.parse_args()
     return args
 
