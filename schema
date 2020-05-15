@@ -34,3 +34,9 @@ CREATE TABLE IF NOT EXISTS karts (
     transponder_id INT UNSIGNED NOT NULL,
     PRIMARY KEY (kart_number)
 )  ENGINE=INNODB;
+
+CREATE TABLE IF NOT EXISTS `settings` (
+  `setting` varchar(30) NOT NULL,
+  `value` varchar(120) DEFAULT NULL,
+  PRIMARY KEY (`setting`)
+) ENGINE=INNODB;
