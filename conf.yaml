@@ -1,5 +1,10 @@
 ---
+---
 ip: '127.0.0.1'
 port: 12000
 file: "/tmp/out.log"
 debug_file: "/tmp/amb_raw.log"
+mysql_backend: True
+mysql_db: 'karts'
+mysql_user: 'kart'
+mysql_password: 'karts'
