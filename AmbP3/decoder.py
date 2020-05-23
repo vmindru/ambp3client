@@ -22,7 +22,7 @@ class Connection:
             logger.error("Can not connect to {}:{}. {}".format(self.ip, self.port, error))
             exit(1)
         except (socket.timeout, socket.error) as error:
-            logger.error("Error occurred while trying to communicate with  {}:{}".format(self.ip, self.port, error))
+            logger.error("Error occurred while trying to communicate with  {}:{}:{}".format(self.ip, self.port, error))
             exit(1)
 
     def split_records(self, data):
@@ -144,7 +144,7 @@ def p3decode(data):
             DECODED = {'TOR': tor_name}
         else:
             print("{} record_type uknown".format(hex_tor))
-            return {'undecode_tor_body': tor_body}
+            return {'undecoded_tor_body': tor_body}
 
         general_fields = records.GENERAL
         tor_fields = {**general_fields, **tor_fields}

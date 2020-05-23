@@ -14,6 +14,7 @@ def get_args():
     parser.add_argument("INPUT_FILE", help="amb.out HEX file location", default=INPUT_FILE, nargs='?')
     parser.add_argument("-l", "--listen-address", help="IP address to bind on",  default=ADDR, dest='ADDR')
     parser.add_argument("-p", "--listen-port", help="PORT to bind on",  default=PORT, dest='PORT', type=int)
+    parser.add_argument("-i", "--interval", help="interval to send data", default=0.5, dest='INTERVAL', type=int)
     args = parser.parse_args()
     return args
 
@@ -29,24 +30,17 @@ def create_sock(ADDR, PORT):
     return conn, s
 
 
-def hex_to_binary(data):
-    try:
-        bin_str = bin(int(data, 16))
-        byte_str = int(bin_str, 2).to_bytes((len(bin_str)//8), 'big')
-        return byte_str
-    except ValueError:
-        return None
-
-
-def send_net(ADDR, PORT, INPUT_FILE):
+def send_net(ADDR, PORT, INPUT_FILE, INTERVAL=0.5):
     conn, s = create_sock(ADDR, PORT)
     with open(INPUT_FILE, "r") as fd:
         while True:
             data = "{}".format(fd.readline()).rstrip()
-            data = hex_to_binary(data)
+            data = bytes.fromhex(data)
             try:
-                conn.send(data)
-                sleep(0.5)
+                if data is not None:
+                    conn.send(data)
+                    print("sending: {}".format(data))
+                    sleep(INTERVAL)
             except (ConnectionResetError, BrokenPipeError) as error:
                 print("socket connection error: {}".format(error))
                 conn.close()
@@ -66,7 +60,7 @@ def main():
     args = get_args()
     while True:
         print("Starting server")
-        send_net(args.ADDR, args.PORT, args.INPUT_FILE)
+        send_net(args.ADDR, args.PORT, args.INPUT_FILE, args.INTERVAL)
         sleep(0.5)
 
 
