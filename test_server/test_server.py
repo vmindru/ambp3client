@@ -35,11 +35,12 @@ def send_net(ADDR, PORT, INPUT_FILE, INTERVAL=0.5):
     with open(INPUT_FILE, "r") as fd:
         while True:
             data = "{}".format(fd.readline()).rstrip()
-            data = bytes.fromhex(data)
+            data_bytes = bytes.fromhex(data)
             try:
-                if data is not None:
-                    conn.send(data)
+                if data_bytes is not None:
+                    conn.send(data_bytes)
                     print("sending: {}".format(data))
+                    print("sending bytes: {}".format(data_bytes))
                     sleep(INTERVAL)
             except (ConnectionResetError, BrokenPipeError) as error:
                 print("socket connection error: {}".format(error))

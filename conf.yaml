@@ -1,6 +1,6 @@
 ---
 ip: '127.0.0.1'
-port: 12000
+port: 12000 # DEFAULT AMB 5403
 file: "/tmp/out.log"
 debug_file: "/tmp/amb_raw.log"
 mysql_backend: True

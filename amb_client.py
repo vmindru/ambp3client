@@ -13,6 +13,7 @@ from AmbP3.write import Cursor
 
 
 def main():
+    print("************ STARTING *******************")
     config = get_args()
     conf = config.conf
     print(conf)
@@ -44,6 +45,7 @@ def main():
                 raw_log_delim = "##############################################"
                 print(raw_log_delim)
                 for data in connection.read():
+                    print(data)
                     decoded_data = data_to_ascii(data)
                     Write.to_file(decoded_data, amb_raw)  # REPLACE BY LOGGING
                     decoded_header, decoded_body = p3decode(data)  # NEED OT REPLACE WITH LOGGING
