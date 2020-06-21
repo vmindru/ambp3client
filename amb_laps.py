@@ -14,6 +14,14 @@ DEFAULT_HEAT_COOLDOWN = 180
 DEFAULT_HEAT_SETTINGS = ["heat_duration", "heat_cooldown"]
 
 
+def IsInt(string):
+    try:
+        int(string)
+        return True
+    except ValueError:
+        return False
+
+
 def list_to_dict(mylist, index=0):
     "convert a list, tuple into dict by index key"
     foo = {}
@@ -78,22 +86,23 @@ class Pass():
 
 class Heat():
     def __init__(self, mysql, heat_duration=DEFAULT_HEAT_DURATION, heat_cooldown=DEFAULT_HEAT_COOLDOWN):
-        def _heat_settings(self):
-            """check for heat_settings in SQL and apply, else default will be used"""
-            query = "select * from settings"
-            results = list(sql_select(self.cursor, query))
-            if len.result() > 0:
-                for result in results:
-                    setting = result[0]
-                    setting_value = result[1]
-                    logging.debug("Found {}: {}".format(setting, setting_value))
-                    setattr(self, setting, setting_value)
-                exit(0)
         self.heat_duration = heat_duration
         self.heat_cooldown = heat_cooldown
         self.mysql = mysql
         self.cursor = self.mysql.cursor()
         self.mycon = (self.mysql, self.cursor)
+        """ GET HEAT SETTINGS BEFORE POTENTIALLY CREATING NEW HEAT,
+        I DON'T LIKE GET_HEAT Creates a heat... need to change this"""
+        query = "select * from settings"
+        results = list(sql_select(self.cursor, query))
+        if len(results) > 0:
+            for result in results:
+                setting = result[0]
+                setting_value = result[1]
+                setting_value = int(setting_value) if IsInt(setting_value) else setting_value
+                logging.debug("Found {}: {}".format(setting, setting_value))
+                setattr(self, setting, setting_value)
+
         self.heat = self.get_heat()
         self.heat_id = self.heat[0]
         self.heat_finished = self.heat[1]
@@ -103,7 +112,6 @@ class Heat():
         self.rtc_time_end = self.heat[5]
         if bool(self.first_pass_id) is True:
             self.first_transponder = self.get_transponder(self.first_pass_id)
-        _heat_settings()
 
     def get_heat(self):
         """ get's current running heat, if no heat is running will create one """
@@ -124,8 +132,8 @@ class Heat():
         result_len = len(list(result))
         if result_len > 0:
             heat_finished = result[0][0]
-            print(f"HEAT FINISHED: {heat_finished}")
-        if bool(self.heat_finished) is True or bool(heat_finished) is True:
+        if bool(self.heat_finished) or bool(heat_finished):
+            logging.debug("HEAT FINISHED")
             return False
         else:
             return True
@@ -218,12 +226,13 @@ passes.pass_id = laps.pass_id where laps.heat_id is NULL".format(all_heat_passes
             else:
                 starting_pass = Pass(*result[0])
 
-            logging.debug("creating new heat starting starting_pass: {}".format(starting_pass.pass_id))
             if starting_pass.pass_id > last_pass.pass_id:
                 rtc_time_start = starting_pass.rtc_time
                 rtc_time_end = rtc_time_start + (heat_duration * 1000000)
                 logging.debug("last pass at {}".format(rtc_time_start))
                 columns = "first_pass_id, rtc_time_start, rtc_time_end"
+                logging.debug("creating new heat starting starting_pass: {}, heat_duration: {}, rtc_time_start: {}, rtc_time_end: {}\
+                              ".format(starting_pass.pass_id, heat_duration, rtc_time_start, rtc_time_end))
                 insert_query = "insert into heats ({}) values ({},{},{})".format(columns,
                                                                                  starting_pass.pass_id,
                                                                                  rtc_time_start,
@@ -235,8 +244,7 @@ passes.pass_id = laps.pass_id where laps.heat_id is NULL".format(all_heat_passes
                 sleep(SLEEP_TIME)
 
     def run_heat(self):
-        "run HEAT with duration"
-        print(f"REMOVE: RUNNING HEAT {self.heat_id}")
+        logging.debug("RUNNING HEAT")
         while self.is_running(self.heat_id):
             self.process_heat_passes()
 
@@ -258,8 +266,7 @@ def main():
     while True:
         mysql = mysql_connect(conf)
         heat = Heat(mysql)
-        if not heat.heat_finished:
-            heat.run_heat()
+        heat.run_heat()
 
 
 if __name__ == "__main__":
