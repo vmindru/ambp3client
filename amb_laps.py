@@ -10,7 +10,9 @@ from amb_client import get_args
 
 # PASSES = [ "db_entry_id", "pass_id", "transponder_id", "rtc_time", "strength", "hits", "flags", "decoder_id" ]
 DEFAULT_HEAT_DURATION = 590
-DEFAULT_HEAT_COOLDOWN = 180
+DEFAULT_HEAT_COOLDOWN = 90
+DEAFULT_HEAT_INTERVAL = 90
+DEFAULT_MINIMUM_LAP_TIME = 10
 DEFAULT_HEAT_SETTINGS = ["heat_duration", "heat_cooldown"]
 
 
@@ -85,9 +87,12 @@ class Pass():
 
 
 class Heat():
-    def __init__(self, mysql, heat_duration=DEFAULT_HEAT_DURATION, heat_cooldown=DEFAULT_HEAT_COOLDOWN):
+    def __init__(self, mysql, heat_duration=DEFAULT_HEAT_DURATION, heat_cooldown=DEFAULT_HEAT_COOLDOWN,
+                 minimum_lap_time=DEFAULT_MINIMUM_LAP_TIME, finish_flauge=False):
         self.heat_duration = heat_duration
         self.heat_cooldown = heat_cooldown
+        self.finish_flague = False
+        self.minimum_lap_time = minimum_lap_time
         self.mysql = mysql
         self.cursor = self.mysql.cursor()
         self.mycon = (self.mysql, self.cursor)
@@ -102,7 +107,6 @@ class Heat():
                 setting_value = int(setting_value) if IsInt(setting_value) else setting_value
                 logging.debug("Found {}: {}".format(setting, setting_value))
                 setattr(self, setting, setting_value)
-
         self.heat = self.get_heat()
         self.heat_id = self.heat[0]
         self.heat_finished = self.heat[1]
@@ -144,25 +148,26 @@ class Heat():
     def get_transponder(self, pass_id):
         query = "select transponder_id from passes where pass_id={}".format(pass_id)
         result = sql_select(self.cursor, query)[0][0]
-        transpoder_id = result
-        return transpoder_id
+        transponder_id = result
+        return transponder_id
 
     def process_heat_passes(self):
         "process heat_passes"
         if bool(self.first_pass_id):
-            sleep(0.5)
+            sleep(0.05)
             self.first_pass_rtc = self.get_pass_rtc(self.first_pass_id)
-            self.heat_rtc_finish = self.first_pass_rtc + ((self.heat_duration + self.heat_cooldown) * 1000000)
+            self.heat_rtc_finish = self.first_pass_rtc + (self.heat_duration * 1000000)
+            self.heat_rtc_max_duration = self.first_pass_rtc + ((self.heat_duration + self.heat_cooldown) * 1000000)
             self.first_transponder = self.get_transponder(self.first_pass_id)
             all_heat_passes_query = "select * from passes where pass_id >= {} and rtc_time <= \
-{rtc_finish} union all ( select * from passes where rtc_time > {rtc_finish} \
-limit 1 )".format(self.first_pass_id, rtc_finish=self.heat_rtc_finish)
+{rtc_max_duration} union all ( select * from passes where rtc_time > {rtc_max_duration} \
+limit 1 )".format(self.first_pass_id, rtc_max_duration=self.heat_rtc_max_duration)
             heat_not_processed_passes_query = "select passes.* from ( {} ) as passes left join laps on \
 passes.pass_id = laps.pass_id where laps.heat_id is NULL".format(all_heat_passes_query)
             not_processed_passes = sql_select(self.cursor, heat_not_processed_passes_query)
             for pas in not_processed_passes:
                 pas = Pass(*pas)
-                if pas.rtc_time > self.heat_rtc_finish:
+                if pas.rtc_time > self.heat_rtc_max_duration:
                     query = "select * from passes where pass_id < {} order by pass_id desc limit 1".format(pas.pass_id)
                     last_pass = Pass(*sql_select(self.cursor, query)[0])
                     self.finish_heat(self.heat_id, last_pass.pass_id)
@@ -170,11 +175,26 @@ passes.pass_id = laps.pass_id where laps.heat_id is NULL".format(all_heat_passes
                 else:
                     self.add_pass_to_laps(self.heat_id, pas)
 
-    def finish_heat(self, heat_id, last_pass_id):
+    def finish_heat(self, heat_id, pass_id):
         logging.debug("finish heat {}".format(heat_id))
-        query = "update heats set heat_finished=1, last_pass_id={} where heat_id = {}".format(last_pass_id, heat_id)
+        query = "update heats set heat_finished=1, last_pass_id={} where heat_id = {}".format(pass_id, heat_id)
         sql_write(self.mycon, query)
         self.heat_finished = True
+
+    def valid_lap_time(self, pas):
+        check_if_last_lap_query = f"select pass_id from laps where rtc_time > {self.heat_rtc_finish}\
+                                    and rtc_time < {self.heat_rtc_max_duration}"
+        query = "select rtc_time from laps where heat_id={} and transponder_id={} order by pass_id desc limit 1".format(self.heat_id,
+                                                                                                                        pas.transponder_id)
+        previous_rtc_time = sql_select(self.cursor, query)
+        in_last_lap = sql_select(self.cursor, check_if_last_lap_query)
+        logging.debug(previous_rtc_time)
+        if len(previous_rtc_time) < 1 and len(in_last_lap) < 1:
+            return True
+        elif pas.rtc_time - previous_rtc_time[0][0] > self.minimum_lap_time * 1000000 and len(in_last_lap) < 2:
+            return True
+        else:
+            return False
 
     def add_pass_to_laps(self, heat_id, pas):
         lap = {"heat_id": heat_id,
@@ -183,8 +203,11 @@ passes.pass_id = laps.pass_id where laps.heat_id is NULL".format(all_heat_passes
                "rtc_time": pas.rtc_time}
         keys = ", ".join(lap.keys())
         values = tuple(lap.values())
-        query = "insert into laps ({}) values {}".format(keys, values)
-        sql_write(self.mycon, query)
+        if self.valid_lap_time(pas):
+            query = "insert into laps ({}) values {}".format(keys, values)
+            sql_write(self.mycon, query)
+        else:
+            pass
 
     def create_heat(mycon, heat_duration, new=False):
         """ waits for a new pass and creates a new HEAT
