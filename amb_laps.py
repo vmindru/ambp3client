@@ -78,6 +78,17 @@ class Pass():
 
 class Heat():
     def __init__(self, mysql, heat_duration=DEFAULT_HEAT_DURATION, heat_cooldown=DEFAULT_HEAT_COOLDOWN):
+        def _heat_settings(self):
+            """check for heat_settings in SQL and apply, else default will be used"""
+            query = "select * from settings"
+            results = list(sql_select(self.cursor, query))
+            if len.result() > 0:
+                for result in results:
+                    setting = result[0]
+                    setting_value = result[1]
+                    logging.debug("Found {}: {}".format(setting, setting_value))
+                    setattr(self, setting, setting_value)
+                exit(0)
         self.heat_duration = heat_duration
         self.heat_cooldown = heat_cooldown
         self.mysql = mysql
@@ -92,18 +103,7 @@ class Heat():
         self.rtc_time_end = self.heat[5]
         if bool(self.first_pass_id) is True:
             self.first_transponder = self.get_transponder(self.first_pass_id)
-
-    def _heat_settings(self, settings):
-        """check for heat_settings in SQL and apply, else default will be used"""
-        query = "select * from settings"
-        results = list(sql_select(self.cursor, query))
-        if len.result() > 0:
-            for result in results:
-                setting = result[0]
-                setting_value = result[1]
-                logging.debug("Found {}: {}".format(setting, setting_value))
-                setattr(self, setting, setting_value)
-            exit(0)
+        _heat_settings()
 
     def get_heat(self):
         """ get's current running heat, if no heat is running will create one """
