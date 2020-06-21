@@ -14,7 +14,7 @@ def get_args():
     parser.add_argument("INPUT_FILE", help="amb.out HEX file location", default=INPUT_FILE, nargs='?')
     parser.add_argument("-l", "--listen-address", help="IP address to bind on",  default=ADDR, dest='ADDR')
     parser.add_argument("-p", "--listen-port", help="PORT to bind on",  default=PORT, dest='PORT', type=int)
-    parser.add_argument("-i", "--interval", help="interval to send data", default=0.5, dest='INTERVAL', type=int)
+    parser.add_argument("-i", "--interval", help="interval to send data", default=0.5, dest='INTERVAL', type=float)
     args = parser.parse_args()
     return args
 
@@ -62,7 +62,6 @@ def main():
     while True:
         print("Starting server")
         send_net(args.ADDR, args.PORT, args.INPUT_FILE, args.INTERVAL)
-        sleep(0.5)
 
 
 if __name__ == "__main__":

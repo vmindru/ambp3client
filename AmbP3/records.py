@@ -99,7 +99,7 @@ type_of_records = {b'0000': {'tor_name': 'RESET', 'tor_fields': RESET},
                    b'002d': {'tor_name': 'SIGNALS', 'tor_fields': SIGNALS},
                    b'002f': {'tor_name': 'LOOP_TRIGGER', 'tor_fields': LOOP_TRIGER},
                    b'004a': {'tor_name': 'TIMELINE', 'tor_fields': TIMELINE},
-                   b'FFFF': {'tor_name': 'ERROR', 'tor_fields': ERROR}
+                   b'ffff': {'tor_name': 'ERROR', 'tor_fields': ERROR}
                    }
 
 

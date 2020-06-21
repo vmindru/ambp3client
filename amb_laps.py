@@ -119,10 +119,16 @@ class Heat():
             return self.get_heat()
 
     def is_running(self, heat_id):
-        if bool(self.heat_finished) is False:
-            return True
-        else:
+        query = f"select heat_finished from heats where heat_id = {heat_id}"
+        result = sql_select(self.cursor, query)
+        result_len = len(list(result))
+        if result_len > 0:
+            heat_finished = result[0][0]
+            print(f"HEAT FINISHED: {heat_finished}")
+        if bool(self.heat_finished) is True or bool(heat_finished) is True:
             return False
+        else:
+            return True
 
     def get_pass_rtc(self, pass_id):
         return sql_select(self.cursor, "select rtc_time from passes where pass_id={}".format(pass_id))[0][0]
@@ -193,8 +199,9 @@ passes.pass_id = laps.pass_id where laps.heat_id is NULL".format(all_heat_passes
         while True:
             query = "select value from settings where setting = 'green_flag'"
             result = list(sql_select(cursor, query))
-            if len(result) > 0 and bool(result[0][0]):
-                logging.debug("Green Flag! Race can start")
+            result = result[0][0]
+            if len(result) > 0 and bool(int(result)):
+                logging.debug(f"Green Flag! Race can start value {result}")
                 break
             else:
                 logging.debug("Waiting for Green Flag")
@@ -229,6 +236,7 @@ passes.pass_id = laps.pass_id where laps.heat_id is NULL".format(all_heat_passes
 
     def run_heat(self):
         "run HEAT with duration"
+        print(f"REMOVE: RUNNING HEAT {self.heat_id}")
         while self.is_running(self.heat_id):
             self.process_heat_passes()
 
