@@ -154,7 +154,7 @@ class Heat():
     def process_heat_passes(self):
         "process heat_passes"
         if bool(self.first_pass_id):
-            sleep(0.05)
+            sleep(0.5)
             self.first_pass_rtc = self.get_pass_rtc(self.first_pass_id)
             self.heat_rtc_finish = self.first_pass_rtc + (self.heat_duration * 1000000)
             self.heat_rtc_max_duration = self.first_pass_rtc + ((self.heat_duration + self.heat_cooldown) * 1000000)

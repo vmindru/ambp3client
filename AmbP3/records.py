@@ -64,7 +64,10 @@ ERROR = {
     'ERROR_CODES': ERROR_CODES
 }
 
-RESEND = {}
+RESEND = {
+        b'01': 'FROM',    # 4 byte
+        b'02': 'UNTIL',   # 4 byte
+        }
 RESET = {}
 CLEAR_PASSING = {}
 SERVER_SETTINGS = {}
@@ -72,7 +75,11 @@ SESSION = {}
 NETWORK_SETTINGS = {}
 WATCHDOG = {}
 PING = {}
-GET_TIME = {}
+GET_TIME = {
+        b'01': 'RTC_TIME',  # 4 bytes
+        b'04': 'FLAGS',  # 2 bytes  NOT SURE IF THIS IS FLAGS ACTUALLY JUST GUESSING
+        b'05': 'UTC_TIME'  # 0bytes  is sued to ask for time
+        }
 GENERAL_SETTINGS = {}
 GPS_INFO = {}
 FIRST_CONTACT = {}
