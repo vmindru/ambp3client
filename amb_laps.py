@@ -183,7 +183,7 @@ passes.pass_id = laps.pass_id where laps.heat_id is NULL".format(all_heat_passes
 
     def valid_lap_time(self, pas):
         check_if_last_lap_query = f"select pass_id from laps where rtc_time > {self.heat_rtc_finish}\
-                                    and rtc_time < {self.heat_rtc_max_duration}"
+ and rtc_time < {self.heat_rtc_max_duration}"
         query = "select rtc_time from laps where heat_id={} and transponder_id={} order by pass_id desc limit 1".format(self.heat_id,
                                                                                                                         pas.transponder_id)
         previous_rtc_time = sql_select(self.cursor, query)
@@ -191,6 +191,9 @@ passes.pass_id = laps.pass_id where laps.heat_id is NULL".format(all_heat_passes
         logging.debug(previous_rtc_time)
         if len(previous_rtc_time) < 1 and len(in_last_lap) < 1:
             return True
+        elif len(in_last_lap) > 0 and len(previous_rtc_time) < 1:
+            logging.debug("Can not join in the last lap")  # if a cart jois in the last lap previous_rtc_time will be out of range
+            return False
         elif pas.rtc_time - previous_rtc_time[0][0] > self.minimum_lap_time * 1000000 and len(in_last_lap) < 2:
             return True
         else:
