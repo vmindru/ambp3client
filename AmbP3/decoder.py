@@ -66,6 +66,12 @@ class Connection:
             logger.error("Socket closed while reading")
 
 
+def hex_to_binary(data):
+    bin_str = bin(int(data, 16))
+    byte_str = int(bin_str, 2).to_bytes((len(bin_str)//8), 'big')
+    return byte_str
+
+
 def bin_to_decimal(bin_data):
     return int(bin_data.decode(), 16)
 

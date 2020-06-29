@@ -4,7 +4,9 @@ import logging
 from time import sleep
 
 from amb_client import open_mysql_connection
+from mysql.connector import Error as MysqlError
 from amb_client import get_args
+from amb_send import amb_send_msg
 # from pprint import pprint
 
 
@@ -14,6 +16,7 @@ DEFAULT_HEAT_COOLDOWN = 90
 DEAFULT_HEAT_INTERVAL = 90
 DEFAULT_MINIMUM_LAP_TIME = 10
 DEFAULT_HEAT_SETTINGS = ["heat_duration", "heat_cooldown"]
+MAX_GET_TIME_ATTEMPTS = 5
 
 
 def IsInt(string):
@@ -36,17 +39,20 @@ def list_to_dict(mylist, index=0):
 
 
 def mysql_connect(conf):
-    con = open_mysql_connection(user=conf['mysql_user'],
-                                db=conf['mysql_db'],
-                                password=conf['mysql_password'],
-                                host=conf['mysql_host'],
-                                port=conf['mysql_port'],)
-    con.autocommit = True
+    try:
+        con = open_mysql_connection(user=conf['mysql_user'],
+                                    db=conf['mysql_db'],
+                                    password=conf['mysql_password'],
+                                    host=conf['mysql_host'],
+                                    port=conf['mysql_port'],)
+    except MysqlError as err:
+        print("Something went wrong: {}".format(err))
     if con is None:
         print("Failed to open DB connection, exiting")
-        exit(1)  # THIS IS VERY DIRTY NEEDS FIX
+        exit(1)
     else:
         return con
+    con.autocommit = True
 
 
 def sql_write(mycon, query):
@@ -65,15 +71,6 @@ def sql_select(cursor, query):
     return results
 
 
-def init_db(mysql, heat_duration=DEFAULT_HEAT_DURATION):
-    cursor = mysql.cursor()
-    query = "select 1 from heats limit 1"
-    sql_select(cursor, query)
-    if not cursor.rowcount > 0:
-        Heat.create_heat((mysql, cursor), heat_duration=DEFAULT_HEAT_DURATION, new=True)
-        exit(0)
-
-
 class Pass():
     def __init__(self, db_entry_id, pass_id, transponder_id, rtc_time, strength, hits, flags, decoder_id):
         self.db_entry_id = db_entry_id
@@ -87,17 +84,17 @@ class Pass():
 
 
 class Heat():
-    def __init__(self, mysql, heat_duration=DEFAULT_HEAT_DURATION, heat_cooldown=DEFAULT_HEAT_COOLDOWN,
+    def __init__(self, conf, heat_duration=DEFAULT_HEAT_DURATION, heat_cooldown=DEFAULT_HEAT_COOLDOWN,
                  minimum_lap_time=DEFAULT_MINIMUM_LAP_TIME, finish_flauge=False):
+        self.conf = conf
+        self.mysql = mysql_connect(conf)
         self.heat_duration = heat_duration
         self.heat_cooldown = heat_cooldown
         self.finish_flague = False
         self.minimum_lap_time = minimum_lap_time
-        self.mysql = mysql
         self.cursor = self.mysql.cursor()
         self.mycon = (self.mysql, self.cursor)
-        """ GET HEAT SETTINGS BEFORE POTENTIALLY CREATING NEW HEAT,
-        I DON'T LIKE GET_HEAT Creates a heat... need to change this"""
+        " GET HEAT SETTINGS BEFORE POTENTIALLY CREATING NEW HEAT,"
         query = "select * from settings"
         results = list(sql_select(self.cursor, query))
         if len(results) > 0:
@@ -127,7 +124,7 @@ class Heat():
             logging.debug("Found running heat {}".format(heat))
             return heat
         else:
-            self.first_pass_id, self.rtc_time_start, self.rtc_time_end = Heat.create_heat(self.mycon, self.heat_duration)
+            self.first_pass_id, self.rtc_time_start, self.rtc_time_end = self.create_heat()
             return self.get_heat()
 
     def is_running(self, heat_id):
@@ -142,7 +139,7 @@ class Heat():
         else:
             return True
 
-    def get_pass_rtc(self, pass_id):
+    def get_pass_timestamp(self, pass_id):
         return sql_select(self.cursor, "select rtc_time from passes where pass_id={}".format(pass_id))[0][0]
 
     def get_transponder(self, pass_id):
@@ -155,15 +152,16 @@ class Heat():
         "process heat_passes"
         if bool(self.first_pass_id):
             sleep(0.5)
-            self.first_pass_rtc = self.get_pass_rtc(self.first_pass_id)
-            self.heat_rtc_finish = self.first_pass_rtc + (self.heat_duration * 1000000)
-            self.heat_rtc_max_duration = self.first_pass_rtc + ((self.heat_duration + self.heat_cooldown) * 1000000)
+            self.heat_rtc_finish = self.self.rtc_time_start + (self.heat_duration * 1000000)
+            self.heat_rtc_max_duration = self.rtc_time_start + ((self.heat_duration + self.heat_cooldown) * 1000000)
             self.first_transponder = self.get_transponder(self.first_pass_id)
-            all_heat_passes_query = "select * from passes where pass_id >= {} and rtc_time <= \
-{rtc_max_duration} union all ( select * from passes where rtc_time > {rtc_max_duration} \
-limit 1 )".format(self.first_pass_id, rtc_max_duration=self.heat_rtc_max_duration)
-            heat_not_processed_passes_query = "select passes.* from ( {} ) as passes left join laps on \
-passes.pass_id = laps.pass_id where laps.heat_id is NULL".format(all_heat_passes_query)
+            """ FIX ME heat_not_processed_passes_query MUST BE MORE SIMPLE """
+            all_heat_passes_query = f"""select * from passes where pass_id >= {self.self.first_pass_id} and rtc_time <=
+{self.rtc_max_duration} union all ( select * from passes where rtc_time > {self.rtc_max_duration} limit 1 )"""
+            heat_not_processed_passes_query = f"""select passes.* from ( {all_heat_passes_query} ) as passes left join laps on
+passes.pass_id = laps.pass_id where laps.heat_id is NULL"""
+            print(heat_not_processed_passes_query)
+            exit(1)
             not_processed_passes = sql_select(self.cursor, heat_not_processed_passes_query)
             for pas in not_processed_passes:
                 pas = Pass(*pas)
@@ -212,7 +210,21 @@ passes.pass_id = laps.pass_id where laps.heat_id is NULL".format(all_heat_passes
         else:
             pass
 
-    def create_heat(mycon, heat_duration, new=False):
+    def get_transponder_time(self):
+        get_time = False
+        max_get_time_attempts = MAX_GET_TIME_ATTEMPTS
+        while get_time is False and max_get_time_attempts > 1:
+            max_get_time_attempts -= 1
+            get_time_msg = "8E0000005BEB000024000100040005008F"
+            header, body = amb_send_msg(get_time_msg, self.conf['ip'], self.conf['port'])
+            try:
+                transponder_time = int(body['RESULT']['RTC_TIME'], 16)
+                logging.debug(f'Transponder time: {transponder_time}')
+                return transponder_time
+            except ValueError:
+                exit("Failed to get transponder time, exiting")
+
+    def create_heat(self):
         """ waits for a new pass and creates a new HEAT
         Parameters:
         mycon: mysql connection and cursor tuple
@@ -221,28 +233,26 @@ passes.pass_id = laps.pass_id where laps.heat_id is NULL".format(all_heat_passes
         Returns:
         pass_id: pass id
         rtc_time_start: heat start time
-        rtc_time_end: heat max end time
+        rtc_time_end: heat end time
         """
         SLEEP_TIME = 1
-        cursor = mycon[1]
-        query = "select * from passes order by pass_id desc limit 1"
-        result = sql_select(cursor, query)
-        last_pass = Pass(*result[0])
-        logging.debug("Last entry: {}. Waiting for new one".format(last_pass.pass_id))
+        cursor = self.mycon[1]
 
         while True:
             query = "select value from settings where setting = 'green_flag'"
             result = list(sql_select(cursor, query))
             result = result[0][0]
             if len(result) > 0 and bool(int(result)):
-                logging.debug(f"Green Flag! Race can start value {result}")
+                green_flag_time = self.get_transponder_time()
+                logging.debug(f"Green Flag is: {result}! Race can start  after: {green_flag_time}")
                 break
             else:
                 logging.debug("Waiting for Green Flag")
             sleep(SLEEP_TIME)
 
         while True:
-            query = "select * from passes where pass_id > {} order by pass_id limit 1".format(last_pass.pass_id)
+            query = f"""select * from passes where pass_id > ( select pass_id from laps order by pass_id desc limit 1 )
+and rtc_time > {green_flag_time} limit 1"""
             result = sql_select(cursor, query)
 
             if not len(result) > 0:
@@ -251,23 +261,18 @@ passes.pass_id = laps.pass_id where laps.heat_id is NULL".format(all_heat_passes
                 continue
             else:
                 starting_pass = Pass(*result[0])
-
-            if starting_pass.pass_id > last_pass.pass_id:
                 rtc_time_start = starting_pass.rtc_time
-                rtc_time_end = rtc_time_start + (heat_duration * 1000000)
+                rtc_time_end = rtc_time_start + (self.heat_duration * 1000000)
                 logging.debug("last pass at {}".format(rtc_time_start))
                 columns = "first_pass_id, rtc_time_start, rtc_time_end"
                 logging.debug("creating new heat starting starting_pass: {}, heat_duration: {}, rtc_time_start: {}, rtc_time_end: {}\
-                              ".format(starting_pass.pass_id, heat_duration, rtc_time_start, rtc_time_end))
+                              ".format(starting_pass.pass_id, self.heat_duration, rtc_time_start, rtc_time_end))
                 insert_query = "insert into heats ({}) values ({},{},{})".format(columns,
                                                                                  starting_pass.pass_id,
                                                                                  rtc_time_start,
                                                                                  rtc_time_end)
-                if sql_write(mycon, insert_query) > 0:
+                if sql_write(self.mycon, insert_query) > 0:
                     return starting_pass.pass_id, rtc_time_start, rtc_time_end
-            else:
-                logging.debug("waiting for new pass")
-                sleep(SLEEP_TIME)
 
     def run_heat(self):
         logging.debug("RUNNING HEAT")
@@ -288,10 +293,9 @@ def main():
     config = get_args()
     conf = config.conf
     logging.basicConfig(level=logging.DEBUG)
-    init_db(mysql_connect(conf))
+    print(conf)
     while True:
-        mysql = mysql_connect(conf)
-        heat = Heat(mysql)
+        heat = Heat(conf)
         heat.run_heat()
 
 

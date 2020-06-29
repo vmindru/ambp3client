@@ -16,7 +16,6 @@ def main():
     print("************ STARTING *******************")
     config = get_args()
     conf = config.conf
-    print(conf)
     mysql_enabled = conf['mysql_backend']
     if not mysql_enabled:
         print("ERROR, please configure MySQL")
@@ -40,12 +39,12 @@ def main():
         exit(1)
 
     try:
-        with open(config.file, "a") as amb_raw, open(config.debug_file, "a") as amb_debug:
+        log_file = config.file
+        debug_log_file = config.debug_file
+        with open(log_file, "a") as amb_raw, open(debug_log_file, "a") as amb_debug:
             while True:
                 raw_log_delim = "##############################################"
-                print(raw_log_delim)
                 for data in connection.read():
-                    print(data)
                     decoded_data = data_to_ascii(data)
                     Write.to_file(decoded_data, amb_raw)  # REPLACE BY LOGGING
                     decoded_header, decoded_body = p3decode(data)  # NEED OT REPLACE WITH LOGGING

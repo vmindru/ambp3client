@@ -3,6 +3,8 @@
 import socket
 from time import sleep
 from argparse import ArgumentParser
+from AmbP3.decoder import hex_to_binary
+from AmbP3.decoder import p3decode
 
 INPUT_FILE = "amb.out"
 ADDR = '127.0.0.1'
@@ -36,6 +38,8 @@ def send_net(ADDR, PORT, INPUT_FILE, INTERVAL=0.5):
         while True:
             data = "{}".format(fd.readline()).rstrip()
             data_bytes = bytes.fromhex(data)
+            last_entry_timestamp = int(p3decode(hex_to_binary(data))[1]['RESULT']['RTC_TIME'], 16)
+            print(last_entry_timestamp)
             try:
                 if data_bytes is not None:
                     conn.send(data_bytes)

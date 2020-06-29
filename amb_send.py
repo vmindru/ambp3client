@@ -1,11 +1,9 @@
 #!/usr/bin/env python
-from time import sleep
 from sys import exit
 from argparse import ArgumentParser
 
 from AmbP3.decoder import p3decode
 from AmbP3.decoder import Connection
-from AmbP3.decoder import bin_data_to_ascii as data_to_ascii
 
 ADDR = '127.0.0.1'
 PORT = 5403
@@ -21,31 +19,27 @@ def get_args():
     return args
 
 
-def main():
-    print("************ STARTING *******************")
-    config = get_args()
-
-    connection = Connection(config.ip, config.port)
+def amb_send_msg(hexmsg, ip=ADDR, port=PORT):
+    connection = Connection(ip, port)
     connection.connect()
-
     try:
-        connection.write(bytes.fromhex(config.hexmsg))
+        connection.write(bytes.fromhex(hexmsg))
         while True:
-            raw_log_delim = "##############################################\n\n"
-            print(raw_log_delim)
             for data in connection.read():
-                decoded_data = data_to_ascii(data)
                 decoded_header, decoded_body = p3decode(data)  # NEED OT REPLACE WITH LOGGING
-                print(decoded_data)
-                print(decoded_header)
-                print(decoded_body)
-                print("\n\n")
-                sleep(2)
+            break
     except KeyboardInterrupt:
         print("Closing")
         exit(0)
     except IOError as e:
         print("error writing to file. Reason: {}".format(e))
+    return decoded_header, decoded_body
+
+
+def main():
+    config = get_args()
+    decoded_header, decoded_body = amb_send_msg(config.hexmsg, config.ip, config.port)
+    print(decoded_header, decoded_body)
 
 
 if __name__ == "__main__":
