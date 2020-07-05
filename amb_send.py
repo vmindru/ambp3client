@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from sys import exit
 from argparse import ArgumentParser
+from time import sleep
 
 from AmbP3.decoder import p3decode
 from AmbP3.decoder import Connection
@@ -24,6 +25,7 @@ def amb_send_msg(hexmsg, ip=ADDR, port=PORT):
     connection.connect()
     try:
         connection.write(bytes.fromhex(hexmsg))
+        sleep(0.5)
         while True:
             for data in connection.read():
                 decoded_header, decoded_body = p3decode(data)  # NEED OT REPLACE WITH LOGGING

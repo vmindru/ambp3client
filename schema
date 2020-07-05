@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS heats (
     last_pass_id INT UNSIGNED,
     rtc_time_start BIGINT UNSIGNED NOT NULL,
     rtc_time_end BIGINT UNSIGNED NOT NULL,
+    race_flag  BOOL DEFAULT 0,
+    rtc_time_max_end BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (heat_id)
 )  ENGINE=INNODB;
 

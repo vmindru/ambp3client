@@ -15,6 +15,9 @@ class Connection:
         self.port = port
         self.socket = socket.socket()
 
+    def close(self):
+        self.socket.close()
+
     def connect(self):
         try:
             self.socket.connect((self.ip, self.port))
