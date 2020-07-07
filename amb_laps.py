@@ -114,6 +114,8 @@ class Heat():
         self.rtc_time_end = self.heat[5]
         self.race_flag = self.heat[6]
         self.rtc_max_duration = self.heat[7]
+        if self.rtc_max_duration is None:
+                self.rtc_max_duration = self.rtc_time_start + ((self.heat_duration + self.heat_cooldown) * 1000000)
         if bool(self.first_pass_id) is True:
             self.first_transponder = self.get_transponder(self.first_pass_id)
 
@@ -164,6 +166,11 @@ class Heat():
 passes.pass_id = laps.pass_id where laps.heat_id is NULL"""
             #  print(heat_not_processed_passes_query)
             not_processed_passes = sql_select(self.cursor, heat_not_processed_passes_query)
+            if self.dt.decoder_time > self.rtc_time_end:
+                self.wave_finish_flag()
+            if self.dt.decoder_time > self.rtc_max_duration:
+                self.finish_heat()
+
             for pas in not_processed_passes:
                 pas = Pass(*pas)
                 if pas.rtc_time > self.rtc_max_duration:
