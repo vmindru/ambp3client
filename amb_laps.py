@@ -211,7 +211,7 @@ passes.pass_id = laps.pass_id where laps.heat_id is NULL"""
             return False
 
     def wave_finish_flag(self):
-        query = f"update  heats set finish_flag = 1 where heat_id={self.heat_id}"
+        query = f"update  heats set race_flag = 1 where heat_id={self.heat_id}"
         sql_write(self.mycon, query)
         self.race_flag = 1
 
