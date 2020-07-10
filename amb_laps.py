@@ -281,10 +281,10 @@ and rtc_time > {green_flag_time} limit 1"""
     def check_if_all_finished(self):
         query_number_of_racers = f"select count(distinct transponder_id) from laps where heat_id={self.heat_id}"
         query_number_of_racers_finished = f"""select count(transponder_id) from laps where heat_id={self.heat_id}
- and rtc_time > {self.heat_rtc_finish}"""
+ and rtc_time > {self.rtc_time_end}"""
         number_of_racers_in_race = sql_select(self.cursor, query_number_of_racers)
         number_of_racers_finished = sql_select(self.cursor, query_number_of_racers_finished)
-        if len(number_of_racers_in_race) > 0 and number_of_racers_finished > 0 and number_of_racers_finished >= number_of_racers_in_race:
+        if len(number_of_racers_in_race) > 0 and len(number_of_racers_finished) > 0 and number_of_racers_finished[0][0] >= number_of_racers_in_race[0][0]:
             return True
         else:
             return False
