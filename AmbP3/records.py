@@ -78,7 +78,7 @@ PING = {}
 GET_TIME = {
         b'01': 'RTC_TIME',  # 4 bytes
         b'04': 'FLAGS',  # 2 bytes  NOT SURE IF THIS IS FLAGS ACTUALLY JUST GUESSING
-        b'05': 'UTC_TIME'  # 0bytes  is sued to ask for time
+        b'05': 'UTC_TIME'  # 0bytes  is used to ask for time
         }
 GENERAL_SETTINGS = {}
 GPS_INFO = {}

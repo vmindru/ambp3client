@@ -1,10 +1,10 @@
 ---
 ip: '127.0.0.1'
-port: 12000 # DEFAULT AMB 5403
+port: 12001 # DEFAULT AMB 5403
 file: "/tmp/out.log"
 debug_file: "/tmp/amb_raw.log"
 mysql_backend: True
 mysql_db: 'karts'
 mysql_port: 3307
-mysql_user: 'kart'
-mysql_password: 'karts'
+mysql_user: 'karts'
+mysql_password: 'QnN3OSY4zqiYipZRTVvMfzY4'

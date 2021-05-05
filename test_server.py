@@ -38,8 +38,10 @@ def send_net(ADDR, PORT, INPUT_FILE, INTERVAL=0.5):
         while True:
             data = "{}".format(fd.readline()).rstrip()
             data_bytes = bytes.fromhex(data)
-            last_entry_timestamp = int(p3decode(hex_to_binary(data))[1]['RESULT']['RTC_TIME'], 16)
-            print(last_entry_timestamp)
+            result = p3decode(hex_to_binary(data))
+            if 'RTC_TIME' in result[1]['RESULT']:
+                last_entry_timestamp = int(result[1]['RESULT']['RTC_TIME'], 16)
+                print(last_entry_timestamp)
             try:
                 if data_bytes is not None:
                     conn.send(data_bytes)
